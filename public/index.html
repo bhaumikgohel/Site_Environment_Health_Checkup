@@ -37,46 +37,49 @@
                     <form id="healthForm">
                         <div class="form-group">
                             <label>Base URL</label>
-                            <input type="url" id="baseUrl" value="https://qa.app.waas.sdsaz.us/" required>
+                            <input type="url" id="baseUrl" value="" required>
                         </div>
                         <div class="row">
                             <div class="form-group">
                                 <label>Username</label>
-                                <input type="text" id="username" value="admin@waas.com">
+                                <input type="text" id="username" value="" required>
                             </div>
                             <div class="form-group">
                                 <label>Password</label>
-                                <input type="password" id="password" value="login12*">
+                                <input type="password" id="password" value="" required>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Dashboard URL (Post-Login)</label>
-                            <input type="text" id="dashboardUrl" value="https://qa.app.waas.sdsaz.us/dashboard/1">
+                            <input type="text" id="dashboardUrl" value="" required>
                         </div>
                         <div class="row">
                             <div class="form-group">
                                 <label>User Locator</label>
-                                <input type="text" id="selectorUser" value='input[id="txt_username"]'>
+                                <input type="text" id="selectorUser" value="" placeholder='input[id="txt_username"]'
+                                    required>
                             </div>
                             <div class="form-group">
                                 <label>Pass Locator</label>
-                                <input type="text" id="selectorPass" value='input[id="txt_password"]'>
+                                <input type="text" id="selectorPass" value="" placeholder='input[id="txt_password"]'
+                                    required>
                             </div>
                         </div>
                         <div class="row">
                             <div class="form-group">
                                 <label>Login Button Locator</label>
-                                <input type="text" id="selectorBtn" value='button[id="btn_login"]'>
+                                <input type="text" id="selectorBtn" value="" placeholder='button[id="btn_login"]'
+                                    required>
                             </div>
                             <div class="form-group">
                                 <label>Error Message Text</label>
-                                <input type="text" id="errorMsg"
-                                    value="Sign in username/email or password provided is not valid. Please try again.">
+                                <input type="text" id="errorMsg" value=""
+                                    placeholder="Sign in username/email or password provided is not valid..." required>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>API Endpoint for Health Check</label>
-                            <input type="text" id="apiEndpoint" value="https://qa.app.waas.sdsaz.us/">
+                            <input type="text" id="apiEndpoint" value="">
                         </div>
                         <div class="button-group">
                             <button type="submit" id="runBtn">Run Health Check</button>

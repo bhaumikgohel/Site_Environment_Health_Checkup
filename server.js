@@ -14,15 +14,15 @@ if (!fs.existsSync(DB_PATH)) {
         configs: {
             "Dev": {},
             "QA": {
-                baseUrl: "https://qa.app.waas.sdsaz.us/",
-                username: "admin@waas.com",
-                password: "login12*",
-                dashboardUrl: "https://qa.app.waas.sdsaz.us/dashboard/1",
-                selectorUser: 'input[id="txt_username"]',
-                selectorPass: 'input[id="txt_password"]',
-                selectorBtn: 'button[id="btn_login"]',
-                errorMsg: "Sign in username/email or password provided is not valid. Please try again.",
-                apiEndpoint: "https://qa.app.waas.sdsaz.us/"
+                baseUrl: "",
+                username: "",
+                password: "",
+                dashboardUrl: "",
+                selectorUser: '',
+                selectorPass: '',
+                selectorBtn: '',
+                errorMsg: "",
+                apiEndpoint: ""
             },
             "Alpha": {},
             "Beta": {},
