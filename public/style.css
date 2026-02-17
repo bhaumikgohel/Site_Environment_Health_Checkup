@@ -84,13 +84,25 @@ main {
 }
 
 select {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--glass-border);
+    background: rgba(59, 130, 246, 0.1);
+    /* Tint of accent color */
+    border: 1px solid var(--accent-color);
     border-radius: 0.5rem;
     padding: 0.4rem 0.8rem;
     color: var(--text-primary);
     font-family: inherit;
     cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+select:hover {
+    background: rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 
 h2 {
@@ -286,9 +298,27 @@ td {
 }
 
 /* History Card Styles */
-.history-card { margin-top: 2rem; }
-.history-card table { font-size: 0.85rem; }
-.hist-time { color: var(--text-secondary); }
-.hist-env { font-weight: 600; color: var(--accent-color); }
-.hist-go { color: var(--success); }
-.hist-nogo { color: var(--danger); }
+.history-card {
+    margin-top: 2rem;
+}
+
+.history-card table {
+    font-size: 0.85rem;
+}
+
+.hist-time {
+    color: var(--text-secondary);
+}
+
+.hist-env {
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.hist-go {
+    color: var(--success);
+}
+
+.hist-nogo {
+    color: var(--danger);
+}
