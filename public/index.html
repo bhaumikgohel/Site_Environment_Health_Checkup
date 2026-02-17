@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Check Dashboard | Premium QA Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 Environment Health Check</h1>
+            <p>Automated Sanity & Performance Validation</p>
+        </header>
+
+        <main>
+            <section class="config-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Configuration</h2>
+                        <div class="env-selector">
+                            <label>Env:</label>
+                            <select id="envDropdown">
+                                <option value="Dev">Dev</option>
+                                <option value="QA" selected>QA</option>
+                                <option value="Alpha">Alpha</option>
+                                <option value="Beta">Beta</option>
+                                <option value="Production">Production</option>
+                            </select>
+                        </div>
+                    </div>
+                    <form id="healthForm">
+                        <div class="form-group">
+                            <label>Base URL</label>
+                            <input type="url" id="baseUrl" value="https://qa.app.waas.sdsaz.us/" required>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" id="username" value="admin@waas.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" id="password" value="login12*">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Dashboard URL (Post-Login)</label>
+                            <input type="text" id="dashboardUrl" value="https://qa.app.waas.sdsaz.us/dashboard/1">
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>User Locator</label>
+                                <input type="text" id="selectorUser" value='input[id="txt_username"]'>
+                            </div>
+                            <div class="form-group">
+                                <label>Pass Locator</label>
+                                <input type="text" id="selectorPass" value='input[id="txt_password"]'>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Login Button Locator</label>
+                                <input type="text" id="selectorBtn" value='button[id="btn_login"]'>
+                            </div>
+                            <div class="form-group">
+                                <label>Error Message Text</label>
+                                <input type="text" id="errorMsg"
+                                    value="Sign in username/email or password provided is not valid. Please try again.">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>API Endpoint for Health Check</label>
+                            <input type="text" id="apiEndpoint" value="https://qa.app.waas.sdsaz.us/">
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" id="runBtn">Run Health Check</button>
+                            <button type="button" id="archiveBtn" class="btn-secondary">Archive Config</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section class="status-panel">
+                <div id="statusIndicator" class="card status-card idle">
+                    <div class="status-content">
+                        <span class="status-label">Overall Status</span>
+                        <h2 id="overallStatus">-</h2>
+                    </div>
+                    <div id="loader" class="loader hidden"></div>
+                </div>
+
+                <div class="card report-card">
+                    <h2>Validation Report</h2>
+                    <div class="table-container">
+                        <table id="reportTable">
+                            <thead>
+                                <tr>
+                                    <th>Check</th>
+                                    <th>Status</th>
+                                    <th>Latency</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Results will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="report-actions">
+                        <button id="downloadBtn" class="btn-secondary hidden">Download HTML Report</button>
+                    </div>
+                </div>
+
+                <div class="card history-card">
+                    <h2>Run History</h2>
+                    <div class="table-container">
+                        <table id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Env</th>
+                                    <th>Status</th>
+                                    <th>Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- History will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
