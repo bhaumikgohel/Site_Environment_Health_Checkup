@@ -86,6 +86,86 @@ module.exports = async (req, res) => {
     });
 };
 
+// Detect locator type: CSS, XPath, or other
+function detectLocatorType(selector) {
+    if (!selector || typeof selector !== 'string') {
+        return { type: 'invalid', selector: selector };
+    }
+    
+    const trimmed = selector.trim();
+    
+    // XPath detection: starts with / or ( or contains XPath axes
+    if (trimmed.startsWith('/') || 
+        trimmed.startsWith('(') ||
+        trimmed.startsWith('./') ||
+        /^(\*\/)?([a-zA-Z]+::|@|text\(|contains\(|starts-with\(|following|preceding|ancestor|descendant)/i.test(trimmed)) {
+        return { type: 'xpath', selector: trimmed };
+    }
+    
+    // Text-based XPath patterns (//tag[text()='value'] or //tag[contains(text(),'value')])
+    if (/\/\/[a-zA-Z]*\[/.test(trimmed) && trimmed.includes('/')) {
+        return { type: 'xpath', selector: trimmed };
+    }
+    
+    // CSS Selector (default)
+    return { type: 'css', selector: trimmed };
+}
+
+// Evaluate XPath using xpath library
+function evaluateXPath(document, xpath, name) {
+    try {
+        const xpathLib = require('xpath');
+        const dom = require('@xmldom/xmldom');
+        
+        // Convert JSDOM document to xmldom for xpath evaluation
+        const serializer = new (require('jsdom').JSDOM)().window.XMLSerializer();
+        const xmlString = serializer.serializeToString(document);
+        const xmlDoc = new dom.DOMParser().parseFromString(xmlString, 'text/html');
+        
+        const nodes = xpathLib.select(xpath, xmlDoc);
+        return nodes && nodes.length > 0;
+    } catch (e) {
+        console.error(`XPath evaluation error for ${name}:`, e.message);
+        return false;
+    }
+}
+
+// Validate a single locator
+function validateLocator(document, locatorInfo) {
+    const { name, selector } = locatorInfo;
+    
+    if (!selector || typeof selector !== 'string') {
+        return { valid: false, error: `${name} (empty selector)` };
+    }
+    
+    const { type, selector: cleanSelector } = detectLocatorType(selector);
+    
+    try {
+        let found = false;
+        
+        if (type === 'xpath') {
+            found = evaluateXPath(document, cleanSelector, name);
+        } else {
+            // CSS Selector
+            found = document.querySelector(cleanSelector) !== null;
+        }
+        
+        if (!found) {
+            return { 
+                valid: false, 
+                error: `${name} (${type}: ${cleanSelector})` 
+            };
+        }
+        
+        return { valid: true, type };
+    } catch (e) {
+        return { 
+            valid: false, 
+            error: `${name} (invalid ${type}: ${e.message})` 
+        };
+    }
+}
+
 // Serverless health check using JSDOM for actual HTML validation
 async function runServerlessHealthCheck(config) {
     const results = { checks: [] };
@@ -93,6 +173,8 @@ async function runServerlessHealthCheck(config) {
     
     // 1. UI URL Accessibility Check
     let dom = null;
+    let document = null;
+    
     try {
         const startTime = Date.now();
         const response = await fetch(config.baseUrl, { 
@@ -107,6 +189,7 @@ async function runServerlessHealthCheck(config) {
         // Parse HTML for locator validation
         const html = await response.text();
         dom = new JSDOM(html, { url: config.baseUrl });
+        document = dom.window.document;
         
         results.checks.push({
             check: "UI URL",
@@ -129,34 +212,28 @@ async function runServerlessHealthCheck(config) {
     // 2. Login Check - Validate Locators
     try {
         const startLogin = Date.now();
-        const document = dom.window.document;
         
-        // Validate each locator exists
+        // Validate each locator
         const locatorChecks = [
             { name: "Username Field", selector: config.selectorUser },
             { name: "Password Field", selector: config.selectorPass },
             { name: "Login Button", selector: config.selectorBtn }
         ];
         
-        const missingLocators = [];
+        const invalidLocators = [];
         
         for (const loc of locatorChecks) {
-            if (!loc.selector) {
-                missingLocators.push(`${loc.name} (empty selector)`);
-                continue;
-            }
-            
-            const element = document.querySelector(loc.selector);
-            if (!element) {
-                missingLocators.push(`${loc.name} (${loc.selector})`);
+            const result = validateLocator(document, loc);
+            if (!result.valid) {
+                invalidLocators.push(result.error);
             }
         }
         
-        if (missingLocators.length > 0) {
-            throw new Error(`Locator not found: ${missingLocators.join(', ')}`);
+        if (invalidLocators.length > 0) {
+            throw new Error(`Locator not found: ${invalidLocators.join(', ')}`);
         }
         
-        // Check if error message selector would work (basic check)
+        // Check if error message is provided
         if (!config.errorMsg) {
             throw new Error("Error Message Text is required but empty");
         }
