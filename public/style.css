@@ -460,6 +460,18 @@ td {
     }
 }
 
+/* AI Badge in Header */
+.ai-badge {
+    color: #8b5cf6;
+    font-weight: 500;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .report-actions {

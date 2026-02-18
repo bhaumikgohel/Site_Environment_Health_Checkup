@@ -41,24 +41,56 @@ async function init() {
     }
 }
 
-// Initialize AI Analysis UI elements
+// Initialize AI Analysis UI elements (only if Ollama is available)
 function initAIElements() {
-    // Add AI Analysis button after download button
+    // Don't create AI elements immediately - wait for status check
+    // Elements will be created only if Ollama is connected
+}
+
+// Check Ollama status - silent check, only creates UI if Ollama is available
+async function checkOllamaStatus() {
+    try {
+        const response = await fetch('/ollama-status');
+        const data = await response.json();
+        
+        ollamaConnected = data.connected;
+        
+        // Only create AI UI elements if Ollama is connected
+        if (ollamaConnected) {
+            createAIElements();
+        }
+        // If not connected, AI elements remain hidden - site works normally
+    } catch (err) {
+        // Silently fail - Ollama is optional
+        console.log('Ollama not available - AI features disabled');
+        ollamaConnected = false;
+    }
+}
+
+// Create AI UI elements only when Ollama is available
+function createAIElements() {
+    // Show AI badge in header
+    const aiBadge = document.getElementById('aiBadge');
+    if (aiBadge) {
+        aiBadge.classList.remove('hidden');
+    }
+    
     const reportActions = document.querySelector('.report-actions');
     if (reportActions && !document.getElementById('aiAnalyzeBtn')) {
+        // Add Ollama status indicator
+        ollamaStatusIndicator = document.createElement('span');
+        ollamaStatusIndicator.id = 'ollamaStatus';
+        ollamaStatusIndicator.className = 'ollama-status ai-ready';
+        ollamaStatusIndicator.innerHTML = '✅ AI Ready';
+        reportActions.appendChild(ollamaStatusIndicator);
+        
+        // Add AI Analysis button
         aiAnalyzeBtn = document.createElement('button');
         aiAnalyzeBtn.id = 'aiAnalyzeBtn';
         aiAnalyzeBtn.className = 'btn-secondary hidden';
         aiAnalyzeBtn.innerHTML = '🤖 AI Analysis';
         aiAnalyzeBtn.addEventListener('click', runAIAnalysis);
         reportActions.appendChild(aiAnalyzeBtn);
-        
-        // Add Ollama status indicator
-        ollamaStatusIndicator = document.createElement('span');
-        ollamaStatusIndicator.id = 'ollamaStatus';
-        ollamaStatusIndicator.className = 'ollama-status';
-        ollamaStatusIndicator.innerHTML = '⏳ Checking AI...';
-        reportActions.insertBefore(ollamaStatusIndicator, aiAnalyzeBtn);
     }
     
     // Create AI Analysis panel
@@ -80,34 +112,6 @@ function initAIElements() {
         
         aiAnalysisContent = document.getElementById('aiAnalysisContent');
         aiLoader = document.getElementById('aiLoader');
-    }
-}
-
-// Check Ollama status
-async function checkOllamaStatus() {
-    try {
-        const response = await fetch('/ollama-status');
-        const data = await response.json();
-        
-        ollamaConnected = data.connected;
-        
-        if (ollamaStatusIndicator) {
-            if (data.connected) {
-                ollamaStatusIndicator.innerHTML = `✅ AI Ready (${data.model})`;
-                ollamaStatusIndicator.classList.add('ai-ready');
-            } else {
-                ollamaStatusIndicator.innerHTML = `⚠️ AI Offline`;
-                ollamaStatusIndicator.classList.add('ai-offline');
-                ollamaStatusIndicator.title = data.message || 'Ollama not available';
-            }
-        }
-    } catch (err) {
-        console.error('Ollama status check failed:', err);
-        ollamaConnected = false;
-        if (ollamaStatusIndicator) {
-            ollamaStatusIndicator.innerHTML = '⚠️ AI Offline';
-            ollamaStatusIndicator.classList.add('ai-offline');
-        }
     }
 }
 
