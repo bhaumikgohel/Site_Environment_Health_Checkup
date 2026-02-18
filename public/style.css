@@ -336,3 +336,140 @@ td {
 .hist-nogo {
     color: var(--danger);
 }
+
+/* AI Analysis Styles */
+.ai-analysis-card {
+    margin-top: 2rem;
+    background: linear-gradient(135deg, rgba(23, 27, 34, 0.9), rgba(59, 130, 246, 0.1));
+    border-left: 4px solid #8b5cf6;
+}
+
+.ai-analysis-card h2 {
+    background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ai-analysis-content {
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.ai-markdown h1 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.ai-markdown h2 {
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--accent-color);
+}
+
+.ai-markdown h3 {
+    font-size: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.ai-markdown ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.ai-markdown li {
+    margin-bottom: 0.5rem;
+}
+
+.ai-markdown code {
+    background: rgba(139, 92, 246, 0.2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.ai-markdown strong {
+    color: var(--accent-color);
+}
+
+.ai-placeholder {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+}
+
+.ai-analyzing {
+    color: #8b5cf6;
+    text-align: center;
+    padding: 2rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.ai-error {
+    color: var(--danger);
+    text-align: center;
+    padding: 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 0.5rem;
+}
+
+.ollama-status {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    margin-right: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.ollama-status.ai-ready {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+}
+
+.ollama-status.ai-offline {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+    cursor: help;
+}
+
+.report-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.report-actions button {
+    width: auto;
+    padding: 0.75rem 1.5rem;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .report-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .report-actions button,
+    .ollama-status {
+        width: 100%;
+        text-align: center;
+    }
+}

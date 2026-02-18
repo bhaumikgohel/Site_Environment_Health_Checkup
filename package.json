@@ -1,12 +1,14 @@
 {
   "name": "environment-health-checkup",
   "version": "1.0.0",
-  "description": "",
-  "main": "link_check.js",
+  "description": "Environment Health Check with Ollama LLM 3.2 Integration",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "start": "node server.js"
   },
-  "keywords": [],
+  "keywords": ["health-check", "ollama", "llm", "playwright", "vercel"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -17,6 +19,10 @@
     "dotenv": "^17.3.1",
     "ejs": "^4.0.1",
     "express": "^5.2.1",
-    "playwright": "^1.58.2"
+    "playwright": "^1.58.2",
+    "ollama": "^0.5.12"
+  },
+  "devDependencies": {
+    "vercel": "^39.0.0"
   }
 }

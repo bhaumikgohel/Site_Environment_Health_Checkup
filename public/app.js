@@ -9,12 +9,21 @@ const envDropdown = document.getElementById('envDropdown');
 const archiveBtn = document.getElementById('archiveBtn');
 const historyTableBody = document.querySelector('#historyTable tbody');
 
+// AI Analysis elements
+let aiAnalyzeBtn = null;
+let aiAnalysisPanel = null;
+let aiAnalysisContent = null;
+let aiLoader = null;
+let ollamaStatusIndicator = null;
+
 let lastReportData = null;
 let allConfigs = {};
+let ollamaConnected = false;
 
 // Load data on startup
 async function init() {
     try {
+        initAIElements();
         const [confRes, histRes] = await Promise.all([
             fetch('/configs'),
             fetch('/history')
@@ -24,9 +33,156 @@ async function init() {
 
         loadEnvConfig(envDropdown.value);
         renderHistory(history);
+        
+        // Check Ollama status
+        checkOllamaStatus();
     } catch (err) {
         console.error("Failed to load data", err);
     }
+}
+
+// Initialize AI Analysis UI elements
+function initAIElements() {
+    // Add AI Analysis button after download button
+    const reportActions = document.querySelector('.report-actions');
+    if (reportActions && !document.getElementById('aiAnalyzeBtn')) {
+        aiAnalyzeBtn = document.createElement('button');
+        aiAnalyzeBtn.id = 'aiAnalyzeBtn';
+        aiAnalyzeBtn.className = 'btn-secondary hidden';
+        aiAnalyzeBtn.innerHTML = '🤖 AI Analysis';
+        aiAnalyzeBtn.addEventListener('click', runAIAnalysis);
+        reportActions.appendChild(aiAnalyzeBtn);
+        
+        // Add Ollama status indicator
+        ollamaStatusIndicator = document.createElement('span');
+        ollamaStatusIndicator.id = 'ollamaStatus';
+        ollamaStatusIndicator.className = 'ollama-status';
+        ollamaStatusIndicator.innerHTML = '⏳ Checking AI...';
+        reportActions.insertBefore(ollamaStatusIndicator, aiAnalyzeBtn);
+    }
+    
+    // Create AI Analysis panel
+    const statusPanel = document.querySelector('.status-panel');
+    if (statusPanel && !document.getElementById('aiAnalysisPanel')) {
+        aiAnalysisPanel = document.createElement('div');
+        aiAnalysisPanel.id = 'aiAnalysisPanel';
+        aiAnalysisPanel.className = 'card ai-analysis-card hidden';
+        aiAnalysisPanel.innerHTML = `
+            <div class="card-header">
+                <h2>🤖 AI Analysis (Ollama LLM 3.2)</h2>
+                <span id="aiLoader" class="loader hidden"></span>
+            </div>
+            <div id="aiAnalysisContent" class="ai-analysis-content">
+                <p class="ai-placeholder">Click "AI Analysis" to get AI-powered insights on the health check results.</p>
+            </div>
+        `;
+        statusPanel.insertBefore(aiAnalysisPanel, statusPanel.querySelector('.history-card'));
+        
+        aiAnalysisContent = document.getElementById('aiAnalysisContent');
+        aiLoader = document.getElementById('aiLoader');
+    }
+}
+
+// Check Ollama status
+async function checkOllamaStatus() {
+    try {
+        const response = await fetch('/ollama-status');
+        const data = await response.json();
+        
+        ollamaConnected = data.connected;
+        
+        if (ollamaStatusIndicator) {
+            if (data.connected) {
+                ollamaStatusIndicator.innerHTML = `✅ AI Ready (${data.model})`;
+                ollamaStatusIndicator.classList.add('ai-ready');
+            } else {
+                ollamaStatusIndicator.innerHTML = `⚠️ AI Offline`;
+                ollamaStatusIndicator.classList.add('ai-offline');
+                ollamaStatusIndicator.title = data.message || 'Ollama not available';
+            }
+        }
+    } catch (err) {
+        console.error('Ollama status check failed:', err);
+        ollamaConnected = false;
+        if (ollamaStatusIndicator) {
+            ollamaStatusIndicator.innerHTML = '⚠️ AI Offline';
+            ollamaStatusIndicator.classList.add('ai-offline');
+        }
+    }
+}
+
+// Run AI Analysis
+async function runAIAnalysis() {
+    if (!lastReportData || !lastReportData.checks) {
+        alert('Please run a health check first!');
+        return;
+    }
+    
+    if (!ollamaConnected) {
+        alert('Ollama is not connected. Please ensure Ollama is running locally with: ollama run llama3.2');
+        return;
+    }
+    
+    aiLoader.classList.remove('hidden');
+    aiAnalyzeBtn.disabled = true;
+    aiAnalyzeBtn.innerHTML = '🤖 Analyzing...';
+    aiAnalysisPanel.classList.remove('hidden');
+    aiAnalysisContent.innerHTML = '<p class="ai-analyzing">🤖 AI is analyzing the health check results...</p>';
+    
+    try {
+        const response = await fetch('/ai-analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                checks: lastReportData.checks,
+                envName: envDropdown.value,
+                baseUrl: document.getElementById('baseUrl').value
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Convert markdown to HTML (basic)
+            const htmlContent = markdownToHtml(data.analysis);
+            aiAnalysisContent.innerHTML = htmlContent;
+        } else {
+            aiAnalysisContent.innerHTML = `<p class="ai-error">❌ Error: ${data.error || 'Analysis failed'}</p>`;
+        }
+    } catch (err) {
+        console.error('AI Analysis error:', err);
+        aiAnalysisContent.innerHTML = `<p class="ai-error">❌ Error: ${err.message}</p>`;
+    } finally {
+        aiLoader.classList.add('hidden');
+        aiAnalyzeBtn.disabled = false;
+        aiAnalyzeBtn.innerHTML = '🤖 AI Analysis';
+    }
+}
+
+// Basic markdown to HTML converter
+function markdownToHtml(markdown) {
+    if (!markdown) return '<p>No analysis available</p>';
+    
+    let html = markdown
+        // Headers
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        // Bold
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Code
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        // Lists
+        .replace(/^\- (.*$)/gim, '<li>$1</li>')
+        // Line breaks
+        .replace(/\n/g, '<br>');
+    
+    // Wrap consecutive li elements in ul
+    html = html.replace(/(<li>.*<\/li>)+/g, '<ul>$&</ul>');
+    
+    return `<div class="ai-markdown">${html}</div>`;
 }
 
 function loadEnvConfig(env) {
@@ -186,6 +342,7 @@ function renderReport(data) {
     statusCard.className = anyFail ? "card status-card no-go" : "card status-card go";
 
     downloadBtn.classList.remove('hidden');
+    if (aiAnalyzeBtn) aiAnalyzeBtn.classList.remove('hidden');
 }
 
 downloadBtn.addEventListener('click', () => {

@@ -2,7 +2,7 @@
 
 A premium, automated environment health check system designed to validate web application availability, authentication flows, and API responsiveness across multiple environments (Dev, QA, Staging, Prod).
 
-![Health Check Dashboard](https://img.shields.io/badge/Status-Active-success?style=flat-square) ![Tech](https://img.shields.io/badge/Stack-Node.js%20%7C%20Express%20%7C%20Playwright-blue?style=flat-square)
+![Health Check Dashboard](https://img.shields.io/badge/Status-Active-success?style=flat-square) ![Tech](https://img.shields.io/badge/Stack-Node.js%20%7C%20Express%20%7C%20Playwright-blue?style=flat-square) ![AI](https://img.shields.io/badge/AI-Ollama%20LLM%203.2-purple?style=flat-square) ![Deploy](https://img.shields.io/badge/Deploy-Vercel-black?style=flat-square)
 
 ## 🌟 Features
 
@@ -15,6 +15,8 @@ A premium, automated environment health check system designed to validate web ap
 *   **Persistent Configuration**: Automatically saves your environment settings to a local JSON database.
 *   **Run History**: Tracks the last 50 execution results with status and performance metrics.
 *   **Interactive Reports**: Generate and download professional HTML reports with environment metadata.
+*   **🤖 AI-Powered Analysis**: Integrated with **Ollama LLM 3.2** for intelligent health report analysis and recommendations.
+*   **🚀 Serverless Ready**: Deploy to Vercel with API routes for scalable, serverless architecture.
 
 ## 🚀 Architecture Flow
 
@@ -51,13 +53,40 @@ graph TD
     npm install
     ```
 
-3.  **Run the Dashboard**
+3.  **Run the Dashboard (Local)**
     ```bash
     node server.js
     ```
 
 4.  **Access the Application**
     Open your browser and navigate to: [http://localhost:3000](http://localhost:3000)
+
+## 🚀 Deploy to Vercel
+
+Deploy instantly to Vercel's serverless platform:
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel --prod
+```
+
+📖 **Detailed deployment guide**: [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md)
+
+### 🤖 Enable AI Analysis with Ollama LLM 3.2
+
+1. **Install Ollama**: [ollama.com](https://ollama.com)
+2. **Download the model**:
+   ```bash
+   ollama pull llama3.2
+   ```
+3. **Start Ollama server**:
+   ```bash
+   ollama serve
+   ```
+4. **Use AI Analysis** in the dashboard after running a health check!
 
 ## 📂 Project Structure
 

@@ -1,0 +1,64 @@
+{
+  "version": 2,
+  "name": "environment-health-checkup",
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/configs",
+      "dest": "/api/configs.js"
+    },
+    {
+      "src": "/save-config",
+      "dest": "/api/save-config.js"
+    },
+    {
+      "src": "/history",
+      "dest": "/api/history.js"
+    },
+    {
+      "src": "/save-history",
+      "dest": "/api/save-history.js"
+    },
+    {
+      "src": "/archive",
+      "dest": "/api/archive.js"
+    },
+    {
+      "src": "/archive-config",
+      "dest": "/api/archive-config.js"
+    },
+    {
+      "src": "/run-check",
+      "dest": "/api/run-check.js"
+    },
+    {
+      "src": "/ai-analyze",
+      "dest": "/api/ai-analyze.js"
+    },
+    {
+      "src": "/ollama-status",
+      "dest": "/api/ollama-status.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ],
+  "env": {
+    "OLLAMA_HOST": "@ollama-host",
+    "OLLAMA_MODEL": "llama3.2"
+  }
+}
