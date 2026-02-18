@@ -1,4 +1,4 @@
-// Run health check using Playwright (local) or JSDOM (serverless)
+// Run health check - simplified version (URL + API only)
 const { exec } = require('child_process');
 const path = require('path');
 const { getCorsHeaders } = require('./_utils');
@@ -22,36 +22,21 @@ module.exports = async (req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
         try {
-            const {
-                baseUrl, username, password, dashboardUrl,
-                selectorUser, selectorPass, selectorBtn,
-                errorMsg, apiEndpoint
-            } = JSON.parse(body);
+            const { baseUrl, apiEndpoint } = JSON.parse(body);
 
-            // Use JSDOM-based check for serverless (more accurate than simulation)
+            // Use simplified health check for serverless
             if (process.env.VERCEL) {
-                const results = await runServerlessHealthCheck({
-                    baseUrl, username, password, dashboardUrl,
-                    selectorUser, selectorPass, selectorBtn,
-                    errorMsg, apiEndpoint
-                });
+                const results = await runServerlessHealthCheck({ baseUrl, apiEndpoint });
                 res.writeHead(200, headers);
                 res.end(JSON.stringify(results));
                 return;
             }
 
-            // Local development - use Playwright
+            // Local development - use simplified Playwright tool
             const env = {
                 ...process.env,
                 DYNAMIC_BASE_URL: baseUrl,
-                DYNAMIC_USERNAME: username,
-                DYNAMIC_PASSWORD: password,
-                DYNAMIC_DASHBOARD_URL: dashboardUrl,
-                DYNAMIC_SELECTOR_USER: selectorUser,
-                DYNAMIC_SELECTOR_PASS: selectorPass,
-                DYNAMIC_SELECTOR_BTN: selectorBtn,
-                DYNAMIC_ERROR_MSG: errorMsg,
-                DYNAMIC_API_ENDPOINT: apiEndpoint
+                DYNAMIC_API_ENDPOINT: apiEndpoint || baseUrl
             };
 
             const toolPath = path.join(__dirname, '..', 'tools', 'ui_health_tool.js');
@@ -86,106 +71,11 @@ module.exports = async (req, res) => {
     });
 };
 
-// Detect locator type: CSS or XPath
-function detectLocatorType(selector) {
-    if (!selector || typeof selector !== 'string') {
-        return { type: 'invalid', selector: selector };
-    }
-    
-    const trimmed = selector.trim();
-    
-    // XPath detection patterns
-    const xpathPatterns = [
-        /^\/\//,                          // //div
-        /^\//,                            // /html
-        /^\(/.test(trimmed),              // (//div)[1]
-        /^\.\/\//,                        // .//div
-        /contains\s*\(/i,                  // contains(text(), 'value')
-        /starts-with\s*\(/i,               // starts-with(@id, 'val')
-        /text\s*\(\s*\)\s*=/i,             // text()='value'
-        /@\w+\s*=|@\w+\s*\]/,              // @id='value' or @id]
-        /\[\s*\d+\s*\]/.test(trimmed) && trimmed.includes('/'),  // //div[1]
-        /following-sibling|preceding-sibling|ancestor|descendant|parent|child/i,  // XPath axes
-    ];
-    
-    const isXPath = xpathPatterns.some(pattern => 
-        typeof pattern === 'boolean' ? pattern : pattern.test(trimmed)
-    );
-    
-    if (isXPath) {
-        return { type: 'xpath', selector: trimmed };
-    }
-    
-    // CSS Selector (default)
-    return { type: 'css', selector: trimmed };
-}
-
-// Simple XPath evaluation using DOM methods (more reliable than xpath library)
-function evaluateXPathSimple(document, xpath) {
-    try {
-        // Use document.evaluate if available (JSDOM supports this)
-        if (document.evaluate) {
-            const result = document.evaluate(
-                xpath,
-                document,
-                null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE,
-                null
-            );
-            return result.singleNodeValue !== null;
-        }
-        return false;
-    } catch (e) {
-        console.error('XPath evaluation error:', e.message);
-        return false;
-    }
-}
-
-// Validate a single locator
-function validateLocator(document, locatorInfo) {
-    const { name, selector } = locatorInfo;
-    
-    if (!selector || typeof selector !== 'string') {
-        return { valid: false, error: `${name} (empty selector)` };
-    }
-    
-    const { type, selector: cleanSelector } = detectLocatorType(selector);
-    
-    try {
-        let found = false;
-        
-        if (type === 'xpath') {
-            found = evaluateXPathSimple(document, cleanSelector);
-        } else {
-            // CSS Selector
-            found = document.querySelector(cleanSelector) !== null;
-        }
-        
-        if (!found) {
-            return { 
-                valid: false, 
-                error: `${name} (${type}: ${cleanSelector})` 
-            };
-        }
-        
-        return { valid: true, type };
-    } catch (e) {
-        return { 
-            valid: false, 
-            error: `${name} (invalid ${type}: ${e.message})` 
-        };
-    }
-}
-
-// Serverless health check using JSDOM for actual HTML validation
+// Simplified serverless health check (URL + API only)
 async function runServerlessHealthCheck(config) {
     const results = { checks: [] };
-    const { JSDOM } = require('jsdom');
     
     // 1. UI URL Accessibility Check
-    let dom = null;
-    let document = null;
-    
     try {
         const startTime = Date.now();
         const response = await fetch(config.baseUrl, { 
@@ -196,18 +86,6 @@ async function runServerlessHealthCheck(config) {
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-
-        // Parse HTML for locator validation
-        const html = await response.text();
-        
-        // Create JSDOM with proper configuration for XPath
-        dom = new JSDOM(html, { 
-            url: config.baseUrl,
-            contentType: 'text/html',
-            includeNodeLocations: true,
-            storageQuota: 10000000
-        });
-        document = dom.window.document;
         
         results.checks.push({
             check: "UI URL",
@@ -222,67 +100,9 @@ async function runServerlessHealthCheck(config) {
             latency: "-",
             notes: e.message || "URL not accessible"
         });
-        addRemainingChecks(results, "Skipped - URL not accessible");
-        return results;
     }
 
-    // 2. Login Check - Validate Locators (only if any locator is provided)
-    const hasAnyLocator = config.selectorUser || config.selectorPass || config.selectorBtn;
-    
-    if (!hasAnyLocator) {
-        // Skip login check entirely if no locators provided
-        results.checks.push({
-            check: "Login",
-            status: "PASS",
-            latency: "-",
-            notes: "Skipped - No locators provided (optional)"
-        });
-    } else {
-        try {
-            const startLogin = Date.now();
-            
-            // Validate only provided locators
-            const locatorChecks = [];
-            if (config.selectorUser) locatorChecks.push({ name: "Username Field", selector: config.selectorUser });
-            if (config.selectorPass) locatorChecks.push({ name: "Password Field", selector: config.selectorPass });
-            if (config.selectorBtn) locatorChecks.push({ name: "Login Button", selector: config.selectorBtn });
-            
-            const invalidLocators = [];
-            
-            for (const loc of locatorChecks) {
-                console.log(`Validating locator: ${loc.name} = "${loc.selector}"`);
-                const result = validateLocator(document, loc);
-                console.log(`Result: ${result.valid ? 'FOUND' : 'NOT FOUND'}`);
-                
-                if (!result.valid) {
-                    invalidLocators.push(result.error);
-                }
-            }
-            
-            if (invalidLocators.length > 0) {
-                throw new Error(`Locator not found: ${invalidLocators.join(', ')}`);
-            }
-            
-            const loginTime = ((Date.now() - startLogin) / 1000).toFixed(1) + "s";
-            
-            results.checks.push({
-                check: "Login",
-                status: "WARNING",
-                latency: loginTime,
-                notes: `Locators valid. Full auth test requires Playwright (local)`
-            });
-            
-        } catch (err) {
-            results.checks.push({
-                check: "Login",
-                status: "FAIL",
-                latency: "-",
-                notes: err.message
-            });
-        }
-    }
-
-    // 3. Backend API Check
+    // 2. Backend API Check
     try {
         const startTime = Date.now();
         const response = await fetch(config.apiEndpoint || config.baseUrl, {
@@ -314,7 +134,7 @@ async function runServerlessHealthCheck(config) {
         });
     }
 
-    // 4. Database (Simulated)
+    // 3. Database (Simulated)
     results.checks.push({
         check: "Database",
         status: "PASS",
@@ -322,7 +142,7 @@ async function runServerlessHealthCheck(config) {
         notes: "Serverless check (via proxy)"
     });
 
-    // 5. Console Errors (Simulated in serverless)
+    // 4. Console Errors (Simulated in serverless)
     results.checks.push({
         check: "Console",
         status: "PASS",
@@ -331,31 +151,4 @@ async function runServerlessHealthCheck(config) {
     });
 
     return results;
-}
-
-function addRemainingChecks(results, skipReason) {
-    results.checks.push({
-        check: "Login",
-        status: "FAIL",
-        latency: "-",
-        notes: skipReason
-    });
-    results.checks.push({
-        check: "Backend API",
-        status: "FAIL",
-        latency: "-",
-        notes: skipReason
-    });
-    results.checks.push({
-        check: "Database",
-        status: "FAIL",
-        latency: "-",
-        notes: skipReason
-    });
-    results.checks.push({
-        check: "Console",
-        status: "FAIL",
-        latency: "-",
-        notes: skipReason
-    });
 }

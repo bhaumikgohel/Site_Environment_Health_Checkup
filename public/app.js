@@ -192,13 +192,6 @@ function markdownToHtml(markdown) {
 function loadEnvConfig(env) {
     const config = allConfigs[env] || {};
     document.getElementById('baseUrl').value = config.baseUrl || "";
-    document.getElementById('username').value = config.username || "";
-    document.getElementById('password').value = config.password || "";
-    document.getElementById('dashboardUrl').value = config.dashboardUrl || "";
-    document.getElementById('selectorUser').value = config.selectorUser || "";
-    document.getElementById('selectorPass').value = config.selectorPass || "";
-    document.getElementById('selectorBtn').value = config.selectorBtn || "";
-    document.getElementById('errorMsg').value = config.errorMsg || "";
     document.getElementById('apiEndpoint').value = config.apiEndpoint || "";
 }
 
@@ -222,13 +215,6 @@ form.addEventListener('submit', async (e) => {
 
     const config = {
         baseUrl: document.getElementById('baseUrl').value,
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value,
-        dashboardUrl: document.getElementById('dashboardUrl').value,
-        selectorUser: document.getElementById('selectorUser').value,
-        selectorPass: document.getElementById('selectorPass').value,
-        selectorBtn: document.getElementById('selectorBtn').value,
-        errorMsg: document.getElementById('errorMsg').value,
         apiEndpoint: document.getElementById('apiEndpoint').value
     };
 
@@ -286,13 +272,6 @@ form.addEventListener('submit', async (e) => {
 archiveBtn.addEventListener('click', () => {
     const config = {
         baseUrl: document.getElementById('baseUrl').value,
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value,
-        dashboardUrl: document.getElementById('dashboardUrl').value,
-        selectorUser: document.getElementById('selectorUser').value,
-        selectorPass: document.getElementById('selectorPass').value,
-        selectorBtn: document.getElementById('selectorBtn').value,
-        errorMsg: document.getElementById('errorMsg').value,
         apiEndpoint: document.getElementById('apiEndpoint').value
     };
 

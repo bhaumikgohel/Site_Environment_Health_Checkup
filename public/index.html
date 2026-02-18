@@ -37,46 +37,11 @@
                     <form id="healthForm">
                         <div class="form-group">
                             <label>Base URL</label>
-                            <input type="url" id="baseUrl" value="" required>
-                        </div>
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Username</label>
-                                <input type="text" id="username" value="" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" id="password" value="" required>
-                            </div>
+                            <input type="url" id="baseUrl" value="" placeholder="https://example.com" required>
                         </div>
                         <div class="form-group">
-                            <label>Dashboard URL (Post-Login)</label>
-                            <input type="text" id="dashboardUrl" value="" required>
-                        </div>
-                        <div class="row">
-                            <div class="form-group">
-                                <label>User Locator <span class="optional">(optional)</span></label>
-                                <input type="text" id="selectorUser" value="" placeholder='input[id="txt_username"] or //input[@id="username"]'>
-                            </div>
-                            <div class="form-group">
-                                <label>Pass Locator <span class="optional">(optional)</span></label>
-                                <input type="text" id="selectorPass" value="" placeholder='input[id="txt_password"] or //input[@type="password"]'>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Login Button Locator <span class="optional">(optional)</span></label>
-                                <input type="text" id="selectorBtn" value="" placeholder='button[id="btn_login"] or //button[text()="Login"]'>
-                            </div>
-                            <div class="form-group">
-                                <label>Error Message Text <span class="optional">(optional)</span></label>
-                                <input type="text" id="errorMsg" value=""
-                                    placeholder="Text to verify on invalid login (e.g., 'Invalid credentials')">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>API Endpoint for Health Check</label>
-                            <input type="text" id="apiEndpoint" value="">
+                            <label>API Endpoint <span class="optional">(optional)</span></label>
+                            <input type="text" id="apiEndpoint" value="" placeholder="https://api.example.com/health">
                         </div>
                         <div class="button-group">
                             <button type="submit" id="runBtn">Run Health Check</button>
