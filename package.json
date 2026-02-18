@@ -13,7 +13,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@xmldom/xmldom": "^0.8.10",
     "axios": "^1.13.5",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
@@ -22,8 +21,7 @@
     "express": "^5.2.1",
     "jsdom": "^24.0.0",
     "playwright": "^1.58.2",
-    "ollama": "^0.5.12",
-    "xpath": "^0.0.34"
+    "ollama": "^0.5.12"
   },
   "devDependencies": {
     "vercel": "^39.0.0"

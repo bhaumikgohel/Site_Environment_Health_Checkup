@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
     });
 };
 
-// Detect locator type: CSS, XPath, or other
+// Detect locator type: CSS or XPath
 function detectLocatorType(selector) {
     if (!selector || typeof selector !== 'string') {
         return { type: 'invalid', selector: selector };
@@ -94,16 +94,25 @@ function detectLocatorType(selector) {
     
     const trimmed = selector.trim();
     
-    // XPath detection: starts with / or ( or contains XPath axes
-    if (trimmed.startsWith('/') || 
-        trimmed.startsWith('(') ||
-        trimmed.startsWith('./') ||
-        /^(\*\/)?([a-zA-Z]+::|@|text\(|contains\(|starts-with\(|following|preceding|ancestor|descendant)/i.test(trimmed)) {
-        return { type: 'xpath', selector: trimmed };
-    }
+    // XPath detection patterns
+    const xpathPatterns = [
+        /^\/\//,                          // //div
+        /^\//,                            // /html
+        /^\(/.test(trimmed),              // (//div)[1]
+        /^\.\/\//,                        // .//div
+        /contains\s*\(/i,                  // contains(text(), 'value')
+        /starts-with\s*\(/i,               // starts-with(@id, 'val')
+        /text\s*\(\s*\)\s*=/i,             // text()='value'
+        /@\w+\s*=|@\w+\s*\]/,              // @id='value' or @id]
+        /\[\s*\d+\s*\]/.test(trimmed) && trimmed.includes('/'),  // //div[1]
+        /following-sibling|preceding-sibling|ancestor|descendant|parent|child/i,  // XPath axes
+    ];
     
-    // Text-based XPath patterns (//tag[text()='value'] or //tag[contains(text(),'value')])
-    if (/\/\/[a-zA-Z]*\[/.test(trimmed) && trimmed.includes('/')) {
+    const isXPath = xpathPatterns.some(pattern => 
+        typeof pattern === 'boolean' ? pattern : pattern.test(trimmed)
+    );
+    
+    if (isXPath) {
         return { type: 'xpath', selector: trimmed };
     }
     
@@ -111,21 +120,23 @@ function detectLocatorType(selector) {
     return { type: 'css', selector: trimmed };
 }
 
-// Evaluate XPath using xpath library
-function evaluateXPath(document, xpath, name) {
+// Simple XPath evaluation using DOM methods (more reliable than xpath library)
+function evaluateXPathSimple(document, xpath) {
     try {
-        const xpathLib = require('xpath');
-        const dom = require('@xmldom/xmldom');
-        
-        // Convert JSDOM document to xmldom for xpath evaluation
-        const serializer = new (require('jsdom').JSDOM)().window.XMLSerializer();
-        const xmlString = serializer.serializeToString(document);
-        const xmlDoc = new dom.DOMParser().parseFromString(xmlString, 'text/html');
-        
-        const nodes = xpathLib.select(xpath, xmlDoc);
-        return nodes && nodes.length > 0;
+        // Use document.evaluate if available (JSDOM supports this)
+        if (document.evaluate) {
+            const result = document.evaluate(
+                xpath,
+                document,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+            );
+            return result.singleNodeValue !== null;
+        }
+        return false;
     } catch (e) {
-        console.error(`XPath evaluation error for ${name}:`, e.message);
+        console.error('XPath evaluation error:', e.message);
         return false;
     }
 }
@@ -144,7 +155,7 @@ function validateLocator(document, locatorInfo) {
         let found = false;
         
         if (type === 'xpath') {
-            found = evaluateXPath(document, cleanSelector, name);
+            found = evaluateXPathSimple(document, cleanSelector);
         } else {
             // CSS Selector
             found = document.querySelector(cleanSelector) !== null;
@@ -188,7 +199,14 @@ async function runServerlessHealthCheck(config) {
 
         // Parse HTML for locator validation
         const html = await response.text();
-        dom = new JSDOM(html, { url: config.baseUrl });
+        
+        // Create JSDOM with proper configuration for XPath
+        dom = new JSDOM(html, { 
+            url: config.baseUrl,
+            contentType: 'text/html',
+            includeNodeLocations: true,
+            storageQuota: 10000000
+        });
         document = dom.window.document;
         
         results.checks.push({
@@ -204,7 +222,6 @@ async function runServerlessHealthCheck(config) {
             latency: "-",
             notes: e.message || "URL not accessible"
         });
-        // Can't proceed with login check if page didn't load
         addRemainingChecks(results, "Skipped - URL not accessible");
         return results;
     }
@@ -223,7 +240,10 @@ async function runServerlessHealthCheck(config) {
         const invalidLocators = [];
         
         for (const loc of locatorChecks) {
+            console.log(`Validating locator: ${loc.name} = "${loc.selector}"`);
             const result = validateLocator(document, loc);
+            console.log(`Result: ${result.valid ? 'FOUND' : 'NOT FOUND'}`);
+            
             if (!result.valid) {
                 invalidLocators.push(result.error);
             }
@@ -240,7 +260,6 @@ async function runServerlessHealthCheck(config) {
         
         const loginTime = ((Date.now() - startLogin) / 1000).toFixed(1) + "s";
         
-        // Since we can't actually submit forms in serverless, we validate what we can
         results.checks.push({
             check: "Login",
             status: "WARNING",
@@ -289,7 +308,7 @@ async function runServerlessHealthCheck(config) {
         });
     }
 
-    // 4. Database (Simulated - would need actual health endpoint)
+    // 4. Database (Simulated)
     results.checks.push({
         check: "Database",
         status: "PASS",
