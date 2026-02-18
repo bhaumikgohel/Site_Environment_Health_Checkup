@@ -55,26 +55,23 @@
                         </div>
                         <div class="row">
                             <div class="form-group">
-                                <label>User Locator</label>
-                                <input type="text" id="selectorUser" value="" placeholder='input[id="txt_username"]'
-                                    required>
+                                <label>User Locator <span class="optional">(optional)</span></label>
+                                <input type="text" id="selectorUser" value="" placeholder='input[id="txt_username"] or //input[@id="username"]'>
                             </div>
                             <div class="form-group">
-                                <label>Pass Locator</label>
-                                <input type="text" id="selectorPass" value="" placeholder='input[id="txt_password"]'
-                                    required>
+                                <label>Pass Locator <span class="optional">(optional)</span></label>
+                                <input type="text" id="selectorPass" value="" placeholder='input[id="txt_password"] or //input[@type="password"]'>
                             </div>
                         </div>
                         <div class="row">
                             <div class="form-group">
-                                <label>Login Button Locator</label>
-                                <input type="text" id="selectorBtn" value="" placeholder='button[id="btn_login"]'
-                                    required>
+                                <label>Login Button Locator <span class="optional">(optional)</span></label>
+                                <input type="text" id="selectorBtn" value="" placeholder='button[id="btn_login"] or //button[text()="Login"]'>
                             </div>
                             <div class="form-group">
-                                <label>Error Message Text</label>
+                                <label>Error Message Text <span class="optional">(optional)</span></label>
                                 <input type="text" id="errorMsg" value=""
-                                    placeholder="Sign in username/email or password provided is not valid..." required>
+                                    placeholder="Text to verify on invalid login (e.g., 'Invalid credentials')">
                             </div>
                         </div>
                         <div class="form-group">

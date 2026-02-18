@@ -141,6 +141,13 @@ label {
     margin-bottom: 0.5rem;
 }
 
+label .optional {
+    font-size: 0.75rem;
+    color: var(--warning);
+    font-weight: 400;
+    font-style: italic;
+}
+
 input {
     width: 100%;
     background: rgba(0, 0, 0, 0.2);

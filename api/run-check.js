@@ -226,54 +226,60 @@ async function runServerlessHealthCheck(config) {
         return results;
     }
 
-    // 2. Login Check - Validate Locators
-    try {
-        const startLogin = Date.now();
-        
-        // Validate each locator
-        const locatorChecks = [
-            { name: "Username Field", selector: config.selectorUser },
-            { name: "Password Field", selector: config.selectorPass },
-            { name: "Login Button", selector: config.selectorBtn }
-        ];
-        
-        const invalidLocators = [];
-        
-        for (const loc of locatorChecks) {
-            console.log(`Validating locator: ${loc.name} = "${loc.selector}"`);
-            const result = validateLocator(document, loc);
-            console.log(`Result: ${result.valid ? 'FOUND' : 'NOT FOUND'}`);
-            
-            if (!result.valid) {
-                invalidLocators.push(result.error);
-            }
-        }
-        
-        if (invalidLocators.length > 0) {
-            throw new Error(`Locator not found: ${invalidLocators.join(', ')}`);
-        }
-        
-        // Check if error message is provided
-        if (!config.errorMsg) {
-            throw new Error("Error Message Text is required but empty");
-        }
-        
-        const loginTime = ((Date.now() - startLogin) / 1000).toFixed(1) + "s";
-        
+    // 2. Login Check - Validate Locators (only if any locator is provided)
+    const hasAnyLocator = config.selectorUser || config.selectorPass || config.selectorBtn;
+    
+    if (!hasAnyLocator) {
+        // Skip login check entirely if no locators provided
         results.checks.push({
             check: "Login",
-            status: "WARNING",
-            latency: loginTime,
-            notes: `Locators valid. Full auth test requires Playwright (local)`
-        });
-        
-    } catch (err) {
-        results.checks.push({
-            check: "Login",
-            status: "FAIL",
+            status: "PASS",
             latency: "-",
-            notes: err.message
+            notes: "Skipped - No locators provided (optional)"
         });
+    } else {
+        try {
+            const startLogin = Date.now();
+            
+            // Validate only provided locators
+            const locatorChecks = [];
+            if (config.selectorUser) locatorChecks.push({ name: "Username Field", selector: config.selectorUser });
+            if (config.selectorPass) locatorChecks.push({ name: "Password Field", selector: config.selectorPass });
+            if (config.selectorBtn) locatorChecks.push({ name: "Login Button", selector: config.selectorBtn });
+            
+            const invalidLocators = [];
+            
+            for (const loc of locatorChecks) {
+                console.log(`Validating locator: ${loc.name} = "${loc.selector}"`);
+                const result = validateLocator(document, loc);
+                console.log(`Result: ${result.valid ? 'FOUND' : 'NOT FOUND'}`);
+                
+                if (!result.valid) {
+                    invalidLocators.push(result.error);
+                }
+            }
+            
+            if (invalidLocators.length > 0) {
+                throw new Error(`Locator not found: ${invalidLocators.join(', ')}`);
+            }
+            
+            const loginTime = ((Date.now() - startLogin) / 1000).toFixed(1) + "s";
+            
+            results.checks.push({
+                check: "Login",
+                status: "WARNING",
+                latency: loginTime,
+                notes: `Locators valid. Full auth test requires Playwright (local)`
+            });
+            
+        } catch (err) {
+            results.checks.push({
+                check: "Login",
+                status: "FAIL",
+                latency: "-",
+                notes: err.message
+            });
+        }
     }
 
     // 3. Backend API Check

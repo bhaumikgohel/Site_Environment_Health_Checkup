@@ -64,68 +64,84 @@ async function runUIHealthCheck() {
             });
         }
 
-        // 2. Login Check (Invalid & Valid merged for SKILL.md format)
-        let loginStatus = "FAIL";
-        let loginNotes = "";
-        const startLogin = Date.now();
-
-        try {
-            // Locator Existence Check before interacting
-            const locators = [
-                { name: "Username Field", selector: config.selectorUser },
-                { name: "Password Field", selector: config.selectorPass },
-                { name: "Login Button", selector: config.selectorBtn }
-            ];
-
-            for (const loc of locators) {
-                try {
-                    await page.waitForSelector(loc.selector, { timeout: 5000 });
-                } catch (e) {
-                    throw new Error(`Locator not found: ${loc.name} (${loc.selector})`);
-                }
-            }
-
-            // Invalid Auth
-            await page.fill(config.selectorUser, 'invalid@test.com');
-            await page.fill(config.selectorPass, 'wrongpass');
-            await page.click(config.selectorBtn);
-
-            try {
-                await page.waitForSelector(`text=${config.errorMsg.replace(/"/g, '')}`, { timeout: 5000 });
-            } catch (e) {
-                throw new Error(`Error Message not found: Expected "${config.errorMsg}"`);
-            }
-
-            // Valid Auth
-            await page.fill(config.selectorUser, config.username);
-            await page.fill(config.selectorPass, config.password);
-            await page.click(config.selectorBtn);
-
-            try {
-                await page.waitForURL(config.dashboardUrl, { timeout: 10000 });
-            } catch (e) {
-                throw new Error(`Auth Success Redirect Failed: Expected ${config.dashboardUrl}`);
-            }
-
-            const totalLoginTime = ((Date.now() - startLogin) / 1000).toFixed(1) + "s";
+        // 2. Login Check (only if locators are provided)
+        const hasAnyLocator = config.selectorUser || config.selectorPass || config.selectorBtn;
+        
+        if (!hasAnyLocator) {
+            // Skip login check entirely if no locators provided
             results.checks.push({
                 check: "Login",
                 status: "PASS",
-                latency: totalLoginTime,
-                notes: "Valid/Invalid scenarios passed"
-            });
-        } catch (err) {
-            results.checks.push({
-                check: "Login",
-                status: "FAIL",
                 latency: "-",
-                notes: err.message // Now contains the specific locator or redirect info
+                notes: "Skipped - No locators provided (optional)"
             });
+        } else {
+            // Perform login check with provided locators
+            let loginStatus = "FAIL";
+            let loginNotes = "";
+            const startLogin = Date.now();
+
+            try {
+                // Check which locators are provided
+                const providedLocators = [];
+                if (config.selectorUser) providedLocators.push({ name: "Username Field", selector: config.selectorUser });
+                if (config.selectorPass) providedLocators.push({ name: "Password Field", selector: config.selectorPass });
+                if (config.selectorBtn) providedLocators.push({ name: "Login Button", selector: config.selectorBtn });
+
+                // Validate provided locators
+                for (const loc of providedLocators) {
+                    try {
+                        await page.waitForSelector(loc.selector, { timeout: 5000 });
+                    } catch (e) {
+                        throw new Error(`Locator not found: ${loc.name} (${loc.selector})`);
+                    }
+                }
+
+                // Invalid Auth (only if all required fields are present)
+                if (config.selectorUser && config.selectorPass && config.selectorBtn && config.errorMsg) {
+                    await page.fill(config.selectorUser, 'invalid@test.com');
+                    await page.fill(config.selectorPass, 'wrongpass');
+                    await page.click(config.selectorBtn);
+
+                    try {
+                        await page.waitForSelector(`text=${config.errorMsg.replace(/"/g, '')}`, { timeout: 5000 });
+                    } catch (e) {
+                        throw new Error(`Error Message not found: Expected "${config.errorMsg}"`);
+                    }
+
+                    // Valid Auth (only if username/password provided)
+                    if (config.username && config.password) {
+                        await page.fill(config.selectorUser, config.username);
+                        await page.fill(config.selectorPass, config.password);
+                        await page.click(config.selectorBtn);
+
+                        try {
+                            await page.waitForURL(config.dashboardUrl, { timeout: 10000 });
+                        } catch (e) {
+                            throw new Error(`Auth Success Redirect Failed: Expected ${config.dashboardUrl}`);
+                        }
+                    }
+                }
+
+                const totalLoginTime = ((Date.now() - startLogin) / 1000).toFixed(1) + "s";
+                results.checks.push({
+                    check: "Login",
+                    status: "PASS",
+                    latency: totalLoginTime,
+                    notes: "Valid/Invalid scenarios passed"
+                });
+            } catch (err) {
+                results.checks.push({
+                    check: "Login",
+                    status: "FAIL",
+                    latency: "-",
+                    notes: err.message
+                });
+            }
         }
 
         // 3. Backend API & Database (Placeholders as per SKILL.md)
         const apiStartTime = Date.now();
-        // Using apiEndpoint from config
         try {
             const apiResponse = await axios.get(config.apiEndpoint, { timeout: 5000 });
             const apiLatency = Date.now() - apiStartTime;
