@@ -56,9 +56,5 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ],
-  "env": {
-    "OLLAMA_HOST": "@ollama-host",
-    "OLLAMA_MODEL": "llama3.2"
-  }
+  ]
 }
